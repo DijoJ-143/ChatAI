@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatBot</title>
+
+    <!-- Google Material Symbols -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+    />
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <button class="chatbot-toggler">
+      <span class="material-symbols-outlined">mode_comment</span>
+      <span class="material-symbols-outlined">close</span>
+    </button>
+
+    <div class="chatbot">
+      <header>
+        <h2>ChatBot</h2>
+        <span class="material-symbols-outlined" onclick="closeall()"
+          >close</span
+        >
+      </header>
+
+      <main>
+        <ul class="chatbox">
+          <li class="chat incoming">
+            <span class="material-symbols-outlined">smart_toy</span>
+            <p>Hi there <br />How can I help you?</p>
+          </li>
+        </ul>
+
+        <div class="chat-input">
+          <textarea placeholder="Enter a message..." required></textarea>
+          <span id="send-btn" class="material-symbols-outlined">send</span>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // closing functions
+      let toggler = document.querySelector(".chatbot-toggler");
+      let body = document.body;
+
+      toggler.addEventListener("click", () => {
+        body.classList.toggle("chatbox-show");
+      });
+
+      function closeall() {
+        body.classList.remove("chatbox-show");
+      }
+
+      //msg controller
+      const ChatInput = document.querySelector(".chat-input textarea");
+      const sndbtn = document.getElementById("send-btn");
+      let chatBox = document.querySelector(".chatbox");
+
+      let usermsg;
+
+      const OPENAI_API_KEY =
+        "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";
+
+      const generateResponse = () => {
+        const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+        fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "microsoft/phi-4-reasoning-plus:free",
+            messages: [{ role: "user", content: usermsg }],
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            thinkingli.remove();
+            const message =
+              data.choices[0]?.message?.content?.trim() || "No response.";
+            chatBox.appendChild(createLi(message, "incoming"));
+            chatBox.scrollTop = chatBox.scrollHeight;
+          })
+          .catch((err) => {
+            thinkingli.remove();
+            console.error("Fetch error:", err);
+            chatBox.appendChild(
+              createLi("Sorry, something went wrong. 😞", "incoming")
+            );
+          });
+      };
+
+      const createLi = (msg, classname) => {
+        const ChatLi = document.createElement("li");
+        ChatLi.classList.add("chat", classname);
+
+        let chatContent =
+          classname === "outgoing"
+            ? `<p>${msg}</p>`
+            : `<span class="material-symbols-outlined">smart_toy</span><p>${msg}</p>`;
+
+        ChatLi.innerHTML = chatContent;
+        return ChatLi;
+      };
+
+      const handleChat = () => {
+        //have the msg
+        usermsg = ChatInput.value.trim();
+
+        // ?? need to create list
+        if (!usermsg) return;
+
+        //append user msg to chatbox
+        chatBox.appendChild(createLi(usermsg, "outgoing"));
+        ChatInput.value = "";
+
+        setTimeout(() => {
+          const thinkingli = createLi("Thinking......", "incoming");
+          chatBox.appendChild(thinkingli);
+          generateResponse();
+        }, 600);
+      };
+
+      sndbtn.addEventListener("click", handleChat);
+    </script>
+  </body>
+</html>
