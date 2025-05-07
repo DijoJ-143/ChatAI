@@ -71,9 +71,9 @@
       let usermsg;
 
       const OPENAI_API_KEY =
-        "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";
+        "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";
 
-      const generateResponse = () => {
+      const generateResponse = (thinkingli) => {
         const API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
         fetch(API_URL, {
@@ -89,14 +89,22 @@
         })
           .then((res) => res.json())
           .then((data) => {
-            thinkingli.remove();
+            // If "Thinking..." is showing, remove it
+            if (thinkingli) {
+              chatBox.removeChild(thinkingli);
+            }
+
             const message =
               data.choices[0]?.message?.content?.trim() || "No response.";
             chatBox.appendChild(createLi(message, "incoming"));
             chatBox.scrollTop = chatBox.scrollHeight;
           })
           .catch((err) => {
-            thinkingli.remove();
+            // If error occurs, remove "Thinking..." message
+            if (thinkingli) {
+              chatBox.removeChild(thinkingli);
+            }
+
             console.error("Fetch error:", err);
             chatBox.appendChild(
               createLi("Sorry, something went wrong. 😞", "incoming")
@@ -118,20 +126,23 @@
       };
 
       const handleChat = () => {
-        //have the msg
+        // Get the user's input message
         usermsg = ChatInput.value.trim();
 
-        // ?? need to create list
+        // Don't process if there's no message
         if (!usermsg) return;
 
-        //append user msg to chatbox
+        // Append the user's message to chatbox
         chatBox.appendChild(createLi(usermsg, "outgoing"));
-        ChatInput.value = "";
+        ChatInput.value = ""; // Clear input field
 
+        // Create and append "Thinking..." message
+        const thinkingli = createLi("Thinking......", "incoming");
+        chatBox.appendChild(thinkingli);
+
+        // Call the generateResponse function to get AI response
         setTimeout(() => {
-          const thinkingli = createLi("Thinking......", "incoming");
-          chatBox.appendChild(thinkingli);
-          generateResponse();
+          generateResponse(thinkingli);
         }, 600);
       };
 
